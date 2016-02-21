@@ -3,7 +3,7 @@
 realtimeDisplay::realtimeDisplay(QWidget *parent)
 	: QMainWindow(parent)
 {
-	// QTextCodec::setCodecForCStrings(QTextCodec::codecForName("system"));  //设置编码格式,防止乱码, before Qt5
+	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("System"));  //设置编码格式,防止乱码, before Qt5
 	/* 1. Initialize variables */
 	ui.setupUi(this);
 	scene = new QGraphicsScene;
@@ -100,10 +100,10 @@ void realtimeDisplay::tableInitial()
 	ui.tableWidget->setHorizontalHeaderLabels(header);
 	
 	ui.tableWidget->horizontalHeader()->setStyleSheet(
-		"QHeaderView::section {color: #4ec9b0;border: 1px solid #cccccc;}");
+		"QHeaderView::section {color: black;border: 1px solid #cccccc;}");
 
-	//ui.tableWidget->horizontalHeader()->setResizeMode(QHeaderView::Stretch);			// before qt 5
-	ui.tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);		// qt 5
+	ui.tableWidget->horizontalHeader()->setResizeMode(QHeaderView::Stretch);			// before qt 5
+	//ui.tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);		// qt 5
 
 	for(int i = 0; i < rows; i+=3)
 	{
@@ -122,7 +122,7 @@ void realtimeDisplay::parseResultData(ResultInfo resultInfo)
 		//targetnum++;
 		num = findZeroLocate(targetNames);
 		//num = targetnum - 1;
-		targetNames[num] = resultInfo.sName;  //写入数组
+		targetNames[num]=resultInfo.sName;  //写入数组
 		resultPositions[num][0] = 1;
 		resultPositions[num][3] = resultInfo.dLocX;
 		resultPositions[num][4] = resultInfo.dLocY;
@@ -130,13 +130,13 @@ void realtimeDisplay::parseResultData(ResultInfo resultInfo)
 		{
 			areaxmax = resultInfo.dLocX;
 		} 
-	    if( resultInfo.dLocX<areaxmin)
+	    if( resultInfo.dLocX < areaxmin)
 		{
 			areaxmin = resultInfo.dLocX;
 		}
 		if(resultInfo.dLocY > areaymax)
 			areaymax = resultInfo.dLocY;
-		if(resultInfo.dLocY<areaymin)
+		if(resultInfo.dLocY < areaymin)
 			areaymin = resultInfo.dLocY;
 		targetnum = num;
 		k=3*num;
@@ -148,7 +148,7 @@ void realtimeDisplay::parseResultData(ResultInfo resultInfo)
 			ui.tableWidget->setSpan(k,0,3,1);
 			rows+=3;
 		}
-		
+
 		ui.tableWidget->setItem(k,0,new QTableWidgetItem(resultInfo.sName));
 		ui.tableWidget->setItem(k,1,new QTableWidgetItem(QString::number(resultInfo.dLocX,'f')));
 		ui.tableWidget->setItem(k,2,new QTableWidgetItem(QString::number(resultInfo.dLocY,'f')));
@@ -160,8 +160,7 @@ void realtimeDisplay::parseResultData(ResultInfo resultInfo)
 	}
 	else
 	{
-		if(targetnum < num)
-		{
+		if(targetnum < num) {
 			targetnum = num;
 		}
 		k=3*num;
@@ -172,16 +171,16 @@ void realtimeDisplay::parseResultData(ResultInfo resultInfo)
 		resultPositions[num][4] = resultInfo.dLocY;
 		resultPositions[num][0] = 2;
 		
-		if( resultInfo.dLocX > areaxmax )
+		if ( resultInfo.dLocX>areaxmax)
 			areaxmax = resultInfo.dLocX;
-		if( resultInfo.dLocX < areaxmin )
+		if( resultInfo.dLocX<areaxmin)
 			areaxmin = resultInfo.dLocX;
 		
 		if(resultInfo.dLocY > areaymax)
 			areaymax = resultInfo.dLocY;
-		if(resultInfo.dLocY < areaymin)
+		if(resultInfo.dLocY<areaymin)
 			areaymin = resultInfo.dLocY;
-
+			
 		ui.tableWidget->setItem(k,1,new QTableWidgetItem(QString::number(resultInfo.dLocX,'f')));
 		ui.tableWidget->setItem(k,2,new QTableWidgetItem(QString::number(resultInfo.dLocY,'f')));
 		ui.tableWidget->setItem(k,3,new QTableWidgetItem(QString::number(resultInfo.dLocZ,'f')));
@@ -189,7 +188,6 @@ void realtimeDisplay::parseResultData(ResultInfo resultInfo)
 		for(int i = 0; i < columns; i++) {
 			ui.tableWidget->item(k,i)->setTextAlignment(Qt::AlignCenter);
 		}
-
 		if (realPositions[num][0]>0)
 		{
 			double t = ui.tableWidget->item(k+1,4)->text().toDouble();
@@ -206,6 +204,7 @@ void realtimeDisplay::parseResultData(ResultInfo resultInfo)
 					ui.tableWidget->item(k+2,i)->setTextAlignment(Qt::AlignCenter);
 				}
 			}
+			
 		}
 	}
 }
@@ -232,7 +231,7 @@ void realtimeDisplay::parseSourcedata(FlyTargetInfo flyTargetinfo)
 			areaymin = flyTargetinfo.dY;
 		realnum = num;
 		k=3*num;
-		if (k >= rows)
+		if (k>=rows)
 		{
 			ui.tableWidget->insertRow(k);  //增加三行
 			ui.tableWidget->insertRow(k+1);
@@ -245,17 +244,19 @@ void realtimeDisplay::parseSourcedata(FlyTargetInfo flyTargetinfo)
 		ui.tableWidget->setItem(k+1,2,new QTableWidgetItem(QString::number(flyTargetinfo.dY,'f')));
 		ui.tableWidget->setItem(k+1,3,new QTableWidgetItem(QString::number(flyTargetinfo.dZ,'f')));
 		ui.tableWidget->setItem(k+1,4,new QTableWidgetItem(QString::number(flyTargetinfo.dpulsetime,'f')));
+		ui.tableWidget->item(k,0)->setTextAlignment(Qt::AlignCenter);
 		for(int i = 1; i < columns; i++) {
 			ui.tableWidget->item(k+1,i)->setTextAlignment(Qt::AlignCenter);
 		}
 	}
 	else
 	{
-		if(realnum < num)
-		{
+		//ui.listWidget->item(num+2)->setText(flyTargetinfo.sName);
+		if(realnum < num) {
 			realnum = num;
 		}
 		k=3*num;
+		realPositions[num][0]++;
 
 		realPositions[num][1] = realPositions[num][3];
 		realPositions[num][2] = realPositions[num][4];
@@ -276,7 +277,6 @@ void realtimeDisplay::parseSourcedata(FlyTargetInfo flyTargetinfo)
 		ui.tableWidget->setItem(k+1,2,new QTableWidgetItem(QString::number(flyTargetinfo.dY,'f')));
 		ui.tableWidget->setItem(k+1,3,new QTableWidgetItem(QString::number(flyTargetinfo.dZ,'f')));
 		ui.tableWidget->setItem(k+1,4,new QTableWidgetItem(QString::number(flyTargetinfo.dpulsetime,'f')));
-		ui.tableWidget->item(k,0)->setTextAlignment(Qt::AlignCenter);
 		for(int i = 1; i < columns; i++) {
 			ui.tableWidget->item(k+1,i)->setTextAlignment(Qt::AlignCenter);
 		}
@@ -370,6 +370,7 @@ void realtimeDisplay::slotReciveData2View(char * rBuf,int size)
 			offset += sizeof(FlyTargetInfo);
 			parseSourcedata(flyTargetInfo);
 		}
+	
 	}
 
 	if (size % sizeof(ResultInfo) == 0) 

@@ -1,10 +1,9 @@
 #ifndef REALTIMEDISPLAY_H
 #define REALTIMEDISPLAY_H
 
-#define NUMMAX 20
+#define NUMMAX 10
 
-#include <QtWidgets/QMainWindow>
-// #include <QtGUI/QMainWindow>		// before Qt 5
+#include <QtGUI/QMainWindow>
 #include "ui_realtimedisplay.h"
 
 #include <QTimer>
@@ -44,7 +43,7 @@ private:
 	double realPositions[NUMMAX][5];
 	double resultPositions[NUMMAX][5];		// Calculate result
 	int targetnum;
-	int realnum;							 // 目标数量,即所需画图数量
+	int realnum;							 // 鐩爣鏁伴噺,鍗虫墍闇�鐢诲浘鏁伴噺
 	double areaxmax;
 	double areaxmin;
 	double areaymax;
