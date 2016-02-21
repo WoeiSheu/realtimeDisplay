@@ -9,7 +9,7 @@ realtimeDisplay::realtimeDisplay(QWidget *parent)
 	scene = new QGraphicsScene;
 	timer = new QTimer(this);
 	connect(timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
-	timestep = 1000;
+	timestep = 50;
 
 	targetnum = 0;
 	realnum   = 0;
@@ -23,7 +23,6 @@ realtimeDisplay::realtimeDisplay(QWidget *parent)
 	timeCount = 0;
 
 	ui.label->setText("Display locus");
-	/* 1. End */
 
 	for (int i=0;i<NUMMAX;i++)
 	{
@@ -34,10 +33,38 @@ realtimeDisplay::realtimeDisplay(QWidget *parent)
 
 	tableInitial();		// Initialize table
 	ui.listWidget->addItem(QString("Log"));		// Initialize listWidget
-	for(int i = 0; i < 10; i++)
+	for(int i = 0; i < 2*NUMMAX; i++)
 	{
 		ui.listWidget->addItem("");
+		
+		m_svgItem[i] = new QGraphicsSvgItem("tank.svg");
+		m_svgItem[i]->setFlags(QGraphicsItem::ItemClipsToShape);
+		m_svgItem[i]->setCacheMode(QGraphicsItem::NoCache);
+		m_svgItem[i]->setZValue(0);
+		m_svgItem[i]->setScale(16);
+
+		m_backgroundItem[i] = new QGraphicsRectItem(m_svgItem[i]->boundingRect());
+		m_backgroundItem[i]->setBrush(Qt::white);
+		m_backgroundItem[i]->setPen(Qt::NoPen);
+		m_backgroundItem[i]->setVisible(true);
+		m_backgroundItem[i]->setZValue(-1);
+		m_backgroundItem[i]->setScale(16);
+
+		m_outlineItem[i] = new QGraphicsRectItem(m_svgItem[i]->boundingRect());
+		QColor c((20+13*i)%255,(70+29*i)%255,255-(17*i)%255);
+		QPen outline( c, 2, Qt::DotLine );
+		outline.setCosmetic(true);
+		m_outlineItem[i]->setPen(outline);
+		m_outlineItem[i]->setBrush(Qt::NoBrush);
+		m_outlineItem[i]->setVisible(true);
+		m_outlineItem[i]->setZValue(1);
+		m_outlineItem[i]->setScale(16);
 	}
+
+	scene->setSceneRect(-1340000,5310000,20000,30000);
+	//ui.graphicsView->centerOn(-100,100);
+	//ui.graphicsView->scale( ui.graphicsView->size().width()/100.0, ui.graphicsView->size().height()/100.0 );
+	/* 1. End */
 
 	_udpServer = new SocketUdp;	//收数据初始化
 	//修改：通过配置文件来设置修改监听的端口号,配置文件放在生成的exe目录下的config文件加下
@@ -49,42 +76,6 @@ realtimeDisplay::realtimeDisplay(QWidget *parent)
 	connect(_udpServer,SIGNAL(sendData2View(char *,int )),this,SLOT(slotReciveData2View(char *,int))); //修改：添加一个字节数
 
 	timer->start(timestep);		// start timer
-	
-	/*bool drawBackground = (m_backgroundItem ? m_backgroundItem->isVisible() : false);
-    bool drawOutline = (m_outlineItem ? m_outlineItem->isVisible() : true);
-    m_svgItem = new QGraphicsSvgItem("tank.svg");
-    m_svgItem->setFlags(QGraphicsItem::ItemClipsToShape);
-    m_svgItem->setCacheMode(QGraphicsItem::NoCache);
-    m_svgItem->setZValue(0);
-
-    m_backgroundItem = new QGraphicsRectItem(m_svgItem->boundingRect());
-    m_backgroundItem->setBrush(Qt::white);
-    m_backgroundItem->setPen(Qt::NoPen);
-    m_backgroundItem->setVisible(drawBackground);
-    m_backgroundItem->setZValue(-1);
-
-    m_outlineItem = new QGraphicsRectItem(m_svgItem->boundingRect());
-    QPen outline(Qt::black, 2, Qt::DashLine);
-    outline.setCosmetic(true);
-    m_outlineItem->setPen(outline);
-    m_outlineItem->setBrush(Qt::NoBrush);
-    m_outlineItem->setVisible(drawOutline);
-    m_outlineItem->setZValue(1);
-
-    scene->addItem(m_backgroundItem);
-    scene->addItem(m_svgItem);
-    scene->addItem(m_outlineItem);
-
-    scene->setSceneRect(m_outlineItem->boundingRect().adjusted(-10, -10, 10, 10));*/
-	
-	m_svgItem = new QGraphicsSvgItem("tank.svg");
-	m_svgItem->setFlags(QGraphicsItem::ItemClipsToShape);
-    m_svgItem->setCacheMode(QGraphicsItem::NoCache);
-    m_svgItem->setZValue(0);
-
-	m_svgItem->setScale(0.5);
-	//m_svgItem->setPos(10*timeCount,10*timeCount); // For test
-	//scene->addItem(m_svgItem);
 }
 
 realtimeDisplay::~realtimeDisplay()
@@ -260,8 +251,11 @@ void realtimeDisplay::parseSourcedata(FlyTargetInfo flyTargetinfo)
 	}
 	else
 	{
+		if(realnum < num)
+		{
+			realnum = num;
+		}
 		k=3*num;
-		realPositions[num][0]++;
 
 		realPositions[num][1] = realPositions[num][3];
 		realPositions[num][2] = realPositions[num][4];
@@ -308,9 +302,6 @@ void realtimeDisplay::parseSourcedata(FlyTargetInfo flyTargetinfo)
 void realtimeDisplay::timerUpdate()
 {	
 	timeCount++;
-	//scene->addLine(10*timeCount,10*timeCount,10+10*timeCount,10+10*timeCount);	// For Test
-	m_svgItem->setPos(10*timeCount,10*timeCount);
-	scene->addItem(m_svgItem);
 
 	for (int i=0; i<=targetnum; i++)
 	{
@@ -329,15 +320,40 @@ void realtimeDisplay::timerUpdate()
 		}
 	}
 
-	if ((areaxmax-areaxmin)>viewx || (areaymax-areaymin>viewy)&&flag==1)
+	/*if ((areaxmax-areaxmin)>viewx || (areaymax-areaymin>viewy)&&flag==1)
 	{
 		ui.graphicsView->scale(viewx/(areaxmax-areaxmin),viewy/(areaymax-areaymin)); 
 		viewx = areaxmax-areaxmin;
 		viewy = areaymax-areaymin;
-	}
+	}*/
 
+	// The following lines are for test
+	m_backgroundItem[0]->setPos(-1340000+100*timeCount,5310000+100*timeCount);
+	m_svgItem[0]->setPos(-1340000+100*timeCount,5310000+100*timeCount);
+	m_outlineItem[0]->setPos(-1340000+100*timeCount,5310000+100*timeCount);
+	m_backgroundItem[1]->setPos(-1320000-100*timeCount,5340000-100*timeCount);
+	m_svgItem[1]->setPos(-1320000-100*timeCount,5340000-100*timeCount);
+	m_outlineItem[1]->setPos(-1320000-100*timeCount,5340000-100*timeCount);
+	scene->addItem(m_backgroundItem[0]);
+	scene->addItem(m_svgItem[0]);
+	scene->addItem(m_outlineItem[0]);
+	//scene->addLine(-1340000+100*timeCount,5310000+100*timeCount,-1339000+100*timeCount,5311000+100*timeCount);
+	scene->addItem(m_backgroundItem[1]);
+	scene->addItem(m_svgItem[1]);
+	scene->addItem(m_outlineItem[1]);
+	//scene->addLine(-1320000-100*timeCount,5340000-100*timeCount,-1321000-100*timeCount,5339000-100*timeCount);
+	// Test end
+
+	ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
 	ui.graphicsView->setScene(scene);
+	
+	// Print log for debug
 	ui.listWidget->item(1)->setText("Target Num: " + QString::number(targetnum) + ", Fly Num: " + QString::number(realnum));
+	ui.listWidget->item(2)->setText("Size width: " + QString::number( ui.graphicsView->size().width() )
+		+ ", Size height: " + QString::number( ui.graphicsView->size().height() ) );
+	ui.listWidget->item(3)->setText("Scene width: " + QString::number( scene->width() )
+		+ ", Scene height: " + QString::number( scene->height() ) );
+	// Log end
 }
 
 void realtimeDisplay::slotReciveData2View(char * rBuf,int size)

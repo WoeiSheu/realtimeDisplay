@@ -57,9 +57,9 @@ private:
 	int rows;
 	int columns;
 
-	QGraphicsItem *m_svgItem;
-    QGraphicsRectItem *m_backgroundItem;
-    QGraphicsRectItem *m_outlineItem;
+	QGraphicsItem *m_svgItem[NUMMAX*2];
+	QGraphicsRectItem *m_backgroundItem[NUMMAX*2];
+	QGraphicsRectItem *m_outlineItem[NUMMAX*2];
 
 	private slots:
 		void slotReciveData2View(char * rBuf,int size);
