@@ -1,2 +1,2 @@
 # realtimeDisplay
-A Qt program to display data.
+For Qt4.7.1 Version.
