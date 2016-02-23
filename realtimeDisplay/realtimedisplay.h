@@ -31,7 +31,9 @@ public:
 	void parseResultData(ResultInfo);
 	void parseSourcedata(FlyTargetInfo);
 
-	int findLocate(QString s[NUMMAX], char name[30]);
+	void sizeUpdate();
+
+	int findLocate(QString s[NUMMAX], char name[32]);
 	int findZeroLocate(QString s[NUMMAX]);
 private:
 	Ui::realtimeDisplayClass ui;
