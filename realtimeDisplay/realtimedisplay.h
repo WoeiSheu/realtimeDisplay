@@ -31,12 +31,14 @@ public:
 	void tableInitial();
 	void parseResultData(ResultInfo);
 	void parseSourcedata(FlyTargetInfo);
+	void sizeUpdate();
 
 	int findLocate(QString s[NUMMAX], char name[30]);
 	int findZeroLocate(QString s[NUMMAX]);
 private:
 	Ui::realtimeDisplayClass ui;
 	QGraphicsScene *scene;
+	QGraphicsScene *axisScene;
 	QTimer *timer;
 	SocketUdp * _udpServer;
 	int timestep;

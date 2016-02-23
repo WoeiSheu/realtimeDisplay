@@ -37,18 +37,18 @@ realtimeDisplay::realtimeDisplay(QWidget *parent)
 	{
 		ui.listWidget->addItem("");
 		
-		m_svgItem[i] = new QGraphicsSvgItem("tank.svg");
+		m_svgItem[i] = new QGraphicsSvgItem("helicopter.svg");
 		m_svgItem[i]->setFlags(QGraphicsItem::ItemClipsToShape);
 		m_svgItem[i]->setCacheMode(QGraphicsItem::NoCache);
 		m_svgItem[i]->setZValue(0);
-		m_svgItem[i]->setScale(16);
+		m_svgItem[i]->setScale(6);
 
 		m_backgroundItem[i] = new QGraphicsRectItem(m_svgItem[i]->boundingRect());
 		m_backgroundItem[i]->setBrush(Qt::white);
 		m_backgroundItem[i]->setPen(Qt::NoPen);
 		m_backgroundItem[i]->setVisible(true);
 		m_backgroundItem[i]->setZValue(-1);
-		m_backgroundItem[i]->setScale(16);
+		m_backgroundItem[i]->setScale(6);
 
 		m_outlineItem[i] = new QGraphicsRectItem(m_svgItem[i]->boundingRect());
 		QColor c((20+13*i)%255,(70+29*i)%255,255-(17*i)%255);
@@ -58,12 +58,21 @@ realtimeDisplay::realtimeDisplay(QWidget *parent)
 		m_outlineItem[i]->setBrush(Qt::NoBrush);
 		m_outlineItem[i]->setVisible(true);
 		m_outlineItem[i]->setZValue(1);
-		m_outlineItem[i]->setScale(16);
+		m_outlineItem[i]->setScale(6);
 	}
 
-	scene->setSceneRect(-1340000,5310000,20000,30000);
+	ui.graphicsView->scale(1,-1);
 	//ui.graphicsView->centerOn(-100,100);
-	//ui.graphicsView->scale( ui.graphicsView->size().width()/100.0, ui.graphicsView->size().height()/100.0 );
+	//ui.graphicsView->scale( ui.graphicsView->size().width()/100.0, ui.graphicsView->size().height()/100.0 );	
+
+	/*QPen axisPen(QBrush(Qt::black),100);
+	scene->addLine(-1340000,5310000,-1340000,5340000,axisPen);
+	for(int i = 0; i < (5340000-5310000)/1000; i++) {
+		scene->addLine(-1340000,5310000+i*1000,-1341000,5310000+i*1000,axisPen);
+		QGraphicsTextItem *text = scene->addText(QString::number(5310000+i*1000));
+		text->setScale(50);
+		text->setPos(-1341000,5310000+i*1000);
+	}*/
 	/* 1. End */
 
 	_udpServer = new SocketUdp;	//收数据初始化
@@ -302,12 +311,32 @@ void realtimeDisplay::parseSourcedata(FlyTargetInfo flyTargetinfo)
 void realtimeDisplay::timerUpdate()
 {	
 	timeCount++;
+	if(timeCount == 1) {
+		areaxmax  = realPositions[0][3];
+		areaxmin  = realPositions[0][3];
+		areaymax  = realPositions[0][4];
+		areaymin  = realPositions[0][4];
+	}
+
+	if(flag == 0) {
+		scene->setSceneRect(0,0,ui.graphicsView->size().width(),ui.graphicsView->size().height());
+	}
+
+	if ((areaxmax-areaxmin > scene->width() ||areaymax-areaymin > scene->height())&&flag==1)
+	{
+		sizeUpdate();
+	}
 
 	for (int i=0; i<=targetnum; i++)
 	{
 		if (resultPositions[i][0] == 2 )
 		{
-			scene->addLine(resultPositions[i][1],resultPositions[i][2],resultPositions[i][3],resultPositions[i][4]);
+			m_backgroundItem[i]->setPos(resultPositions[i][1],resultPositions[i][2]);
+			m_svgItem[i]->setPos(resultPositions[i][1],resultPositions[i][2]);
+			m_outlineItem[i]->setPos(resultPositions[i][1],resultPositions[i][2]);
+			scene->addItem(m_backgroundItem[i]);
+			scene->addItem(m_svgItem[i]);
+			scene->addItem(m_outlineItem[i]);
 			flag = 1;
 		}
 	}
@@ -315,20 +344,18 @@ void realtimeDisplay::timerUpdate()
 	{
 		if (realPositions[i][0] == 2)
 		{
-			scene->addLine(realPositions[i][1],realPositions[i][2],realPositions[i][3],realPositions[i][4]);
+			m_backgroundItem[targetnum+i+1]->setPos(realPositions[i][1],realPositions[i][2]);
+			m_svgItem[targetnum+i+1]->setPos(realPositions[i][1],realPositions[i][2]);
+			m_outlineItem[targetnum+i+1]->setPos(realPositions[i][1],realPositions[i][2]);
+			scene->addItem(m_backgroundItem[targetnum+i+1]);
+			scene->addItem(m_svgItem[targetnum+i+1]);
+			scene->addItem(m_outlineItem[targetnum+i+1]);
 			flag = 1;	
 		}
 	}
 
-	/*if ((areaxmax-areaxmin)>viewx || (areaymax-areaymin>viewy)&&flag==1)
-	{
-		ui.graphicsView->scale(viewx/(areaxmax-areaxmin),viewy/(areaymax-areaymin)); 
-		viewx = areaxmax-areaxmin;
-		viewy = areaymax-areaymin;
-	}*/
-
 	// The following lines are for test
-	m_backgroundItem[0]->setPos(-1340000+100*timeCount,5310000+100*timeCount);
+	/*m_backgroundItem[0]->setPos(-1340000+100*timeCount,5310000+100*timeCount);
 	m_svgItem[0]->setPos(-1340000+100*timeCount,5310000+100*timeCount);
 	m_outlineItem[0]->setPos(-1340000+100*timeCount,5310000+100*timeCount);
 	m_backgroundItem[1]->setPos(-1320000-100*timeCount,5340000-100*timeCount);
@@ -337,14 +364,12 @@ void realtimeDisplay::timerUpdate()
 	scene->addItem(m_backgroundItem[0]);
 	scene->addItem(m_svgItem[0]);
 	scene->addItem(m_outlineItem[0]);
-	//scene->addLine(-1340000+100*timeCount,5310000+100*timeCount,-1339000+100*timeCount,5311000+100*timeCount);
 	scene->addItem(m_backgroundItem[1]);
 	scene->addItem(m_svgItem[1]);
-	scene->addItem(m_outlineItem[1]);
-	//scene->addLine(-1320000-100*timeCount,5340000-100*timeCount,-1321000-100*timeCount,5339000-100*timeCount);
+	scene->addItem(m_outlineItem[1]);*/
 	// Test end
 
-	ui.graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+	ui.graphicsView->fitInView(scene->sceneRect(), Qt::IgnoreAspectRatio);
 	ui.graphicsView->setScene(scene);
 	
 	// Print log for debug
@@ -354,6 +379,49 @@ void realtimeDisplay::timerUpdate()
 	ui.listWidget->item(3)->setText("Scene width: " + QString::number( scene->width() )
 		+ ", Scene height: " + QString::number( scene->height() ) );
 	// Log end
+}
+
+void realtimeDisplay::sizeUpdate()
+{
+	int x0 = areaxmin-0.15*(areaxmax-areaxmin);
+	int y0 = areaymin-0.05*(areaymax-areaymin);
+	scene->setSceneRect(x0,y0,1.20*(areaxmax-areaxmin),1.10*(areaymax-areaymin));
+
+	int intervalNum = 10;
+	int xInterval = (areaxmax-areaxmin)/intervalNum;
+	int yInterval = (areaymax-areaymin)/intervalNum;
+	
+	QPen cpen;
+	QVector<qreal> dashes;
+	qreal space = 10;
+	dashes<<5<<space<<5<<space;
+	cpen.setDashPattern(dashes);
+	cpen.setColor(Qt::gray);
+
+	for (int i=1;i<intervalNum;i++)
+	{
+		scene->addLine(areaxmin+i*xInterval,areaymin,areaxmin+i*xInterval,areaymax,cpen);
+		QGraphicsTextItem *xlabel = scene->addText(QString::number(areaxmin+i*xInterval,'f',0));
+		xlabel->setScale(30);
+		xlabel->setPos(areaxmin+i*xInterval,areaymin);
+		scene->addLine(areaxmin,areaymin+i*yInterval,areaxmax,areaymin+i*yInterval,cpen);
+
+		QGraphicsTextItem *ylabel = scene->addText(QString::number(areaymin+i*yInterval,'f',0));
+		ylabel->setScale(30);
+		ylabel->setPos(areaxmin,areaymin+i*yInterval);
+	}
+
+	// coordinate
+	cpen.setBrush(QBrush(Qt::black));
+	cpen.setStyle(Qt::SolidLine);
+	cpen.setCosmetic(true);
+	cpen.setWidth(2);
+	scene->addLine(areaxmin,areaymin,areaxmin,areaymax,cpen);
+	scene->addLine(areaxmin,areaymin,areaxmax,areaymin,cpen);
+	for(int i = 0; i <= intervalNum*5; i++) {
+		scene->addLine(areaxmin+i*xInterval/5,areaymin,areaxmin+i*xInterval/5,areaymin+30,cpen);
+		scene->addLine(areaxmin,areaymin+i*yInterval/5,areaxmin+30,areaymin+i*yInterval/5,cpen);
+	}
 }
 
 void realtimeDisplay::slotReciveData2View(char * rBuf,int size)
